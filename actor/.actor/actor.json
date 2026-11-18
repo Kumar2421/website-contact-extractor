@@ -1,0 +1,18 @@
+{
+  "actorSpecification": 1,
+  "name": "website-contact-extractor",
+  "title": "Website Contact Scraper: Emails, Phones, WhatsApp, Socials",
+  "description": "Extract emails, phone numbers, WhatsApp and social profiles from any list of business websites. Every value links to its source page. Pay only for websites where a contact is found.",
+  "version": "1.0",
+  "buildTag": "latest",
+  "meta": { "templateId": "ts-empty" },
+  "input": "./input_schema.json",
+  "dockerfile": "./Dockerfile",
+  "readme": "../README.md",
+  "defaultMemoryMbytes": 512,
+  "minMemoryMbytes": 256,
+  "maxMemoryMbytes": 2048,
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  }
+}

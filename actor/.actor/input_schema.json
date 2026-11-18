@@ -1,0 +1,35 @@
+{
+  "title": "Website Contact Extractor input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "startUrls": {
+      "title": "Websites",
+      "type": "array",
+      "description": "Business websites to scan. Domains (acme.com) or full URLs. You can also upload a text or CSV file of URLs here.",
+      "editor": "requestListSources",
+      "prefill": [{ "url": "https://www.igus.de" }, { "url": "https://www.dishoom.com" }, { "url": "https://www.zotter.at" }]
+    },
+    "websites": {
+      "title": "Websites (plain list)",
+      "type": "array",
+      "description": "Alternative to Websites for API and agent use: a plain array of domains or URLs.",
+      "editor": "stringList"
+    },
+    "maxPagesPerSite": {
+      "title": "Pages per website",
+      "type": "integer",
+      "description": "We read the homepage, then the contact, legal-notice (Impressum), about and team pages. 8 finds most contacts; more pages cost more compute, not more per-site fees.",
+      "default": 8,
+      "minimum": 1,
+      "maximum": 15
+    },
+    "includePhones": { "title": "Phone numbers", "type": "boolean", "description": "Validated with libphonenumber and normalised to +E.164.", "default": true },
+    "includeSocials": { "title": "Social profiles", "type": "boolean", "description": "LinkedIn, Facebook, Instagram, X, YouTube, TikTok, Pinterest, Telegram.", "default": true },
+    "validateEmails": { "title": "Check email domains (MX)", "type": "boolean", "description": "Flags addresses whose domain cannot receive mail.", "default": true },
+    "aiSummary": { "title": "AI company summary", "type": "boolean", "description": "One-line description and industry per website with contacts. Charged as a separate event. Never invents contact data.", "default": false },
+    "onlyWithContacts": { "title": "Only output websites with contacts", "type": "boolean", "description": "Skip rows for empty and unreachable sites (they are free either way).", "default": false, "sectionCaption": "Advanced" },
+    "maxConcurrency": { "title": "Max concurrency", "type": "integer", "description": "Websites processed in parallel.", "default": 10, "minimum": 1, "maximum": 50 }
+  },
+  "required": []
+}

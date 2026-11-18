@@ -1,0 +1,14 @@
+node_modules/
+.next/
+*.tsbuildinfo
+.env*
+!.env.example
+local.env
+.vercel/
+supabase/.temp/
+supabase/.branches/
+scripts/out/
+actor/storage/
+actor/node_modules/
+actor/dist/
+.claude/

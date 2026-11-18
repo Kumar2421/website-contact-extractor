@@ -1,0 +1,34 @@
+{
+  "actorSpecification": 1,
+  "fields": {},
+  "views": {
+    "overview": {
+      "title": "Overview",
+      "transformation": {
+        "fields": ["domain", "status", "company_name", "primary_email", "emails", "primary_phone", "whatsapp", "linkedin", "instagram", "facebook", "contact_page", "status_note"]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "domain": { "label": "Website", "format": "text" },
+          "status": { "label": "Status", "format": "text" },
+          "company_name": { "label": "Company", "format": "text" },
+          "primary_email": { "label": "Best email", "format": "text" },
+          "emails": { "label": "All emails", "format": "text" },
+          "primary_phone": { "label": "Phone", "format": "text" },
+          "whatsapp": { "label": "WhatsApp", "format": "text" },
+          "linkedin": { "label": "LinkedIn", "format": "link" },
+          "instagram": { "label": "Instagram", "format": "link" },
+          "facebook": { "label": "Facebook", "format": "link" },
+          "contact_page": { "label": "Contact page", "format": "link" },
+          "status_note": { "label": "Note", "format": "text" }
+        }
+      }
+    },
+    "sources": {
+      "title": "With sources",
+      "transformation": { "fields": ["domain", "email_sources", "phone_sources", "pages_crawled"] },
+      "display": { "component": "table" }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "website-contact-extractor-actor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Apify Actor: emails, phones, WhatsApp and socials from a list of business websites. Pay per site with a contact found.",
+  "scripts": {
+    "sync-engine": "node ./sync-engine.mjs",
+    "build": "npm run sync-engine && esbuild src/main.ts --bundle --platform=node --format=esm --packages=external --target=node22 --outfile=dist/main.js",
+    "start": "node dist/main.js",
+    "start:dev": "npm run build && node dist/main.js",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "apify": "3.8.0",
+    "cheerio": "1.2.0",
+    "disposable-email-domains-js": "2.2.0",
+    "libphonenumber-js": "1.13.16",
+    "robots-parser": "3.0.1",
+    "tldts": "7.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "esbuild": "0.28.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}
