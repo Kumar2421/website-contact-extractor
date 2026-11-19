@@ -20,7 +20,7 @@ const SAMPLE = `{
 const FEATURES = [
   { icon: Coins, title: "Pay only when we find something", text: "One credit per website with an email, phone or WhatsApp. Empty sites, parked domains and sites that block us cost nothing." },
   { icon: Link2, title: "Every value shows its source", text: "Each email and phone links to the exact page it was found on. Nothing is guessed or generated." },
-  { icon: Zap, title: "Finds what others miss", text: "Reads contact, imprint, about and team pages in 20+ languages, decodes Cloudflare-hidden emails and schema.org data." },
+  { icon: Zap, title: "Finds what others miss", text: "Reads contact, imprint, about and team pages in 15+ languages, decodes Cloudflare-hidden emails and schema.org data." },
   { icon: BadgeCheck, title: "Clean, checked data", text: "Email domains checked for MX, role addresses flagged, phones validated and normalised to +E.164, junk filtered." },
   { icon: FileSpreadsheet, title: "Bulk in, spreadsheet out", text: "Paste a list or upload a CSV. Export CSV, Excel (with a per-email sheet) or JSON, or use the API and webhooks." },
   { icon: ShieldCheck, title: "Polite and transparent", text: "Identifiable crawler that honours robots.txt. Every empty or failed row says why, in plain words." },
