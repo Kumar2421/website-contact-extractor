@@ -19,7 +19,9 @@ Give it a list of business websites. You get one clean row per website: emails, 
 }
 ```
 
-Each row also has a `details` object with per-email confidence, role or personal type, MX status, and every source URL.
+Turn on **Include full details** to add a nested `details` object with per-email confidence, role or personal type, MX status and every source URL. It is off by default, because it makes CSV exports very wide.
+
+`emails` holds the business's own addresses and anything we are confident about. Low-confidence addresses on other domains (web agencies, partners) go to `other_emails`.
 
 ## What you pay
 
@@ -47,6 +49,7 @@ Each row also has a `details` object with per-email confidence, role or personal
 | Phones / Socials / MX check | on | |
 | AI company summary | off | |
 | Only output websites with contacts | off | |
+| Include full details (JSON) | off | |
 
 ## Good to know
 

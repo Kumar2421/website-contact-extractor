@@ -14,6 +14,7 @@ export const FLAT_COLUMNS = [
   "country",
   "primary_email",
   "emails",
+  "other_emails",
   "email_sources",
   "role_emails",
   "personal_emails",
@@ -34,7 +35,13 @@ export const FLAT_COLUMNS = [
 ] as const;
 
 export function flattenResult(r: SiteResult): FlatRow {
-  const usable = r.emails.filter((e) => e.mx !== "invalid");
+  const reachable = r.emails.filter((e) => e.mx !== "invalid");
+  // The business's own addresses (and anything we are confident about) go in `emails`. Low-confidence
+  // addresses on other domains (web agencies, partners, vendors) go in `other_emails`, so the main
+  // column stays clean. If nothing else exists, they stay in the main column rather than vanish.
+  const confident = reachable.filter((e) => e.ownDomain || e.confidence !== "low");
+  const usable = confident.length ? confident : reachable;
+  const other = confident.length ? reachable.filter((e) => !confident.includes(e)) : [];
   const social = (k: keyof SiteResult["socials"]) => (r.socials[k] ?? []).map((s) => s.url).join("; ");
   return {
     input: r.input,
@@ -47,6 +54,7 @@ export function flattenResult(r: SiteResult): FlatRow {
     country: r.company.country ?? "",
     primary_email: usable[0]?.value ?? "",
     emails: usable.map((e) => e.value).join("; "),
+    other_emails: other.map((e) => e.value).join("; "),
     email_sources: usable.map((e) => `${e.value} <- ${e.sources[0]}`).join("; "),
     role_emails: usable.filter((e) => e.kind === "role").map((e) => e.value).join("; "),
     personal_emails: usable.filter((e) => e.kind === "personal").map((e) => e.value).join("; "),

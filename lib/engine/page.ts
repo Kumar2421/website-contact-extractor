@@ -215,13 +215,18 @@ export function extractPage(html: string, pageUrl: string, opts: { countryHint?:
     const text = $(el).text().replace(/\s+/g, " ").trim().slice(0, 80);
     const title = $(el).attr("title") ?? $(el).attr("aria-label") ?? "";
     const path = safeDecode(u.pathname).toLowerCase();
+    // A /en/ copy of a German page is a duplicate, not a new source: rank other-language prefixes lower
+    // so the page budget goes to different pages.
+    const prefix = /^\/([a-z]{2})(?:-[a-z]{2,4})?(?:\/|$)/.exec(path)?.[1];
+    const pageLang = (facts.meta.lang ?? "").slice(0, 2).toLowerCase();
+    const langPenalty = prefix && pageLang && prefix !== pageLang ? 25 : 0;
     let best: RankedLink | null = null;
     for (const rule of LINK_RULES) {
       const inPath = rule.re.test(path);
       const inText = rule.re.test(text.replace(/\s+/g, "-")) || rule.re.test(title.replace(/\s+/g, "-"));
       if (!inPath && !inText) continue;
       const depth = path.split("/").filter(Boolean).length;
-      const score = rule.score + (inPath ? 5 : 0) + (inText ? 5 : 0) - Math.max(0, depth - 2) * 8 - (u.search ? 10 : 0);
+      const score = rule.score + (inPath ? 5 : 0) + (inText ? 5 : 0) - Math.max(0, depth - 2) * 8 - (u.search ? 10 : 0) - langPenalty;
       if (!best || score > best.score) best = { url: target, score, reason: rule.reason };
     }
     if (!best) {

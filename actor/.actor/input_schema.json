@@ -29,6 +29,7 @@
     "validateEmails": { "title": "Check email domains (MX)", "type": "boolean", "description": "Flags addresses whose domain cannot receive mail.", "default": true },
     "aiSummary": { "title": "AI company summary", "type": "boolean", "description": "One-line description and industry per website with contacts. Charged as a separate event. Never invents contact data.", "default": false },
     "onlyWithContacts": { "title": "Only output websites with contacts", "type": "boolean", "description": "Skip rows for empty and unreachable sites (they are free either way).", "default": false, "sectionCaption": "Advanced" },
+    "includeDetails": { "title": "Include full details (JSON)", "type": "boolean", "description": "Adds a nested 'details' object per website (confidence, MX status, every source page). Off by default because it turns a CSV export into hundreds of columns; the flat columns already include every value and its source page.", "default": false },
     "maxConcurrency": { "title": "Max concurrency", "type": "integer", "description": "Websites processed in parallel. Automatically capped by the run's memory (about 9 at 512 MB, 25 at 1 GB).", "default": 5, "minimum": 1, "maximum": 50 }
   },
   "required": []

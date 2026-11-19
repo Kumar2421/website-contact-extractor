@@ -7,7 +7,7 @@ export const EMAIL_RE = /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-
 
 const JUNK_EXTENSION = /\.(png|jpe?g|gif|webp|avif|svg|ico|css|js|mjs|json|woff2?|ttf|eot|mp4|webm|pdf|zip)$/i;
 const JUNK_DOMAIN =
-  /(^|\.)(sentry\.io|sentry-next\.wixpress\.com|wixpress\.com|sentry\.wixpress\.com|ingest\.sentry\.io|example\.(com|org|net)|domain\.(com|tld)|yourdomain\.[a-z]+|yoursite\.[a-z]+|yourcompany\.[a-z]+|company\.com|email\.com|test\.com|website\.com|mysite\.com|sitename\.com|placeholder\.[a-z]+|godaddy\.com|wordpress\.(com|org)|w3\.org|schema\.org|sentry\.[a-z]+)$/i;
+  /(^|\.)(intercom-mail\.com|intercom\.io|sentry\.io|sentry-next\.wixpress\.com|wixpress\.com|sentry\.wixpress\.com|ingest\.sentry\.io|example\.(com|org|net)|domain\.(com|tld)|yourdomain\.[a-z]+|yoursite\.[a-z]+|yourcompany\.[a-z]+|company\.com|email\.com|test\.com|website\.com|mysite\.com|sitename\.com|placeholder\.[a-z]+|godaddy\.com|wordpress\.(com|org)|w3\.org|schema\.org|sentry\.[a-z]+)$/i;
 const JUNK_LOCAL = /^(no-?reply|do-?not-?reply|donotreply|mailer-daemon|postmaster|bounce[s]?|abuse|webmaster@?|hostmaster|your-?(name|email)?|name|email|user(name)?|someone|john\.?doe|jane\.?doe|first\.?last|firstname\.?lastname|test|example)$/i;
 const HASH_LOCAL = /^[a-f0-9]{16,}$/i;
 
@@ -38,7 +38,19 @@ export function registrable(host: string): string {
   return parseDomain(h).domain ?? h;
 }
 
-/** Cloudflare "email protection": a hex string whose first byte XORs the rest. */
+/** Same brand on another TLD or a short suffix (igus.de and igus.net, zotter.at and zotterusa.com). */
+export function sameBrand(a: string, b: string): boolean {
+  const la = (parseDomain(a).domainWithoutSuffix ?? "").toLowerCase();
+  const lb = (parseDomain(b).domainWithoutSuffix ?? "").toLowerCase();
+  if (!la || !lb) return false;
+  if (la === lb) return true;
+  return Math.min(la.length, lb.length) >= 4 && (la.startsWith(lb) || lb.startsWith(la));
+}
+
+/** Addresses that are rarely the one you want for a sales approach: sorted below general contact addresses. */
+const PURPOSE_LOW = /^(press|media|pr|careers?|jobs?|recruit(?:ing|ment)?|hr|privacy|dpo|dataprotection|datenschutz|gdpr|legal|compliance|billing|accounts?|accounting|invoices?|webmaster|abuse)$/;
+
+/** Cloudflare "email protection":a hex string whose first byte XORs the rest. */
 export function decodeCfEmail(hex: string): string | null {
   if (!/^[0-9a-f]+$/i.test(hex) || hex.length < 4 || hex.length % 2) return null;
   const key = parseInt(hex.slice(0, 2), 16);
@@ -96,7 +108,8 @@ export function emailKind(email: string): EmailFinding["kind"] {
   const parts = local.split(/[._+-]/);
   if (ROLE_LOCALS.has(local) || ROLE_LOCALS.has(base) || parts.some((p) => ROLE_LOCALS.has(p.replace(/[0-9]+$/, "")))) return "role";
   // first.last, f.last, firstlast with a separator: looks like a named person.
-  if (/^[a-z]{2,20}[._-][a-z]{2,25}$/.test(local) || /^[a-z]\.?[a-z]{2,25}$/.test(local)) return "personal";
+  // A bare word (tickets@, edition@, feasting@) is a function, not a person, so it stays "generic".
+  if (/^[a-z]{2,20}[._-][a-z]{2,25}$/.test(local) || /^[a-z]\.[a-z]{2,25}$/.test(local)) return "personal";
   return "generic";
 }
 
@@ -119,7 +132,7 @@ export function mergeEmails(candidates: Candidate[], siteHost: string): EmailFin
     const email = cleanEmail(c.email);
     if (!email) continue;
     const domain = email.slice(email.indexOf("@") + 1);
-    const ownDomain = registrable(domain) === site;
+    const ownDomain = registrable(domain) === site || (!isFreeProvider(domain) && sameBrand(domain, siteHost));
     // Addresses buried in scripts are only trusted on the site's own domain (kills vendor/tracker noise).
     if (c.via === "script" && !ownDomain) continue;
     let f = map.get(email);
@@ -144,10 +157,12 @@ export function mergeEmails(candidates: Candidate[], siteHost: string): EmailFin
   const hasOwn = findings.some((f) => f.ownDomain);
   for (const f of findings) f.confidence = scoreEmail(f, hasOwn);
   const weight = (f: EmailFinding) =>
-    (f.ownDomain ? 100 : f.freeProvider ? 40 : 0) +
+    // An exact domain match beats a sister brand domain (zotter.at over zotterusa.com).
+    (f.ownDomain ? (registrable(f.value.slice(f.value.indexOf("@") + 1)) === site ? 100 : 88) : f.freeProvider ? 40 : 0) +
     (f.confidence === "high" ? 30 : f.confidence === "medium" ? 15 : 0) +
     (f.kind === "role" ? 8 : f.kind === "personal" ? 6 : 0) +
-    Math.min(f.sources.length, 5);
+    Math.min(f.sources.length, 5) -
+    (PURPOSE_LOW.test(f.value.slice(0, f.value.indexOf("@")).split(/[._+-]/)[0]) ? 20 : 0);
   return findings.sort((a, b) => weight(b) - weight(a) || a.value.localeCompare(b.value));
 }
 

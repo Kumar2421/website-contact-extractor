@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { extractPage } from "../lib/engine/page.ts";
-import { cleanEmail, decodeCfEmail, deobfuscate, emailKind, mergeEmails } from "../lib/engine/emails.ts";
+import { cleanEmail, decodeCfEmail, deobfuscate, emailKind, mergeEmails, sameBrand } from "../lib/engine/emails.ts";
 import { phonesFromText } from "../lib/engine/phones.ts";
 import { matchSocial } from "../lib/engine/social.ts";
 import { extractSite, normalizeInput } from "../lib/engine/crawl.ts";
@@ -155,6 +155,72 @@ test("MX: null MX is invalid, missing MX with A record is risky", async () => {
 });
 
 test("CSV export neutralises formula injection", () => {
-  const csv = toCsv([0].map(() => ({ input: "=cmd", domain: "", status: "", status_note: "", company_name: "+1", ai_summary: "", industry: "", country: "", primary_email: "", emails: "", email_sources: "", role_emails: "", personal_emails: "", primary_phone: "", phones: "", phone_sources: "", whatsapp: "", linkedin: "", facebook: "", instagram: "", x: "", youtube: "", tiktok: "", telegram: "", contact_page: "", pages_crawled: 0, final_url: "" })));
+  const csv = toCsv([0].map(() => ({ input: "=cmd", domain: "", status: "", status_note: "", company_name: "+1", ai_summary: "", industry: "", country: "", primary_email: "", emails: "", other_emails: "", email_sources: "", role_emails: "", personal_emails: "", primary_phone: "", phones: "", phone_sources: "", whatsapp: "", linkedin: "", facebook: "", instagram: "", x: "", youtube: "", tiktok: "", telegram: "", contact_page: "", pages_crawled: 0, final_url: "" })));
   assert.match(csv, /\n'=cmd,/);
+});
+
+// ---- regressions found in a real Apify run (zotter.at, dishoom.com, igus.de) ----
+
+test("bare function words are generic, only first.last looks personal", () => {
+  for (const e of ["tickets@zotter.at", "edition@zotter.at", "feasting@dishoom.com", "haendlerportal@zotter.at"]) assert.equal(emailKind(e), "generic", e);
+  assert.equal(emailKind("yvonne.quella@zotter.at"), "personal");
+  assert.equal(emailKind("j.smith@acme.com"), "personal");
+});
+
+test("helpdesk relay addresses are junk", () => {
+  assert.equal(cleanEmail("nh6i0hld@zotter-schokoladen-manufaktur-test.intercom-mail.com"), null);
+});
+
+test("same-brand domains count as the company's own (igus.net on igus.de, zotterusa.com on zotter.at)", () => {
+  assert.equal(sameBrand("igus.net", "www.igus.de"), true);
+  assert.equal(sameBrand("zotterusa.com", "zotter.at"), true);
+  assert.equal(sameBrand("developer.at", "zotter.at"), false);
+  assert.equal(sameBrand("dm.com", "dm.de"), true);
+  const merged = mergeEmails([{ email: "de-info@igus.net", source: "https://www.igus.de/", via: "mailto" }], "www.igus.de");
+  assert.equal(merged[0].ownDomain, true);
+  assert.equal(merged[0].confidence, "high");
+});
+
+test("press and careers addresses rank below general contact addresses", () => {
+  const merged = mergeEmails(
+    [
+      { email: "press@dishoom.com", source: "https://dishoom.com/say-hello/", via: "mailto" },
+      { email: "press@dishoom.com", source: "https://dishoom.com/", via: "text" },
+      { email: "store@dishoom.com", source: "https://dishoom.com/store/", via: "mailto" },
+    ],
+    "dishoom.com",
+  );
+  assert.equal(merged[0].value, "store@dishoom.com");
+});
+
+test("other-language copies of a page rank below same-language pages", () => {
+  const html = `<html lang="de"><a href="/kontakt">Kontakt</a><a href="/en/contact">Contact</a><a href="/impressum">Impressum</a></html>`;
+  const f = extractPage(html, "https://zotter.at/");
+  const en = f.links.find((l) => l.url.endsWith("/en/contact"))!;
+  const de = f.links.find((l) => l.url.endsWith("/kontakt"))!;
+  assert.ok(en.score < de.score - 20);
+  // a language root that matches the page language is not penalised
+  const g = extractPage(`<html lang="de-DE"><a href="/de-de/kontakt">Kontakt</a></html>`, "https://fischer.de/de-de");
+  assert.ok(g.links[0].score >= 100);
+});
+
+test("flat export keeps own-domain emails in `emails` and moves low-confidence third parties to `other_emails`", () => {
+  const e = (value: string, ownDomain: boolean, confidence: "high" | "low") => ({ value, kind: "role" as const, ownDomain, freeProvider: false, disposable: false, mx: "valid" as const, confidence, sources: ["https://acme.de/"], via: ["mailto" as const] });
+  const site = { input: "acme.de", domain: "acme.de", status: "found", statusNote: "", company: { name: null, summary: null, industry: null, country: null, description: null, language: null }, emails: [e("info@acme.de", true, "high"), e("office@agency.at", false, "low")], phones: [], whatsapp: [], socials: {}, contactPageUrl: null, pagesCrawled: [], finalUrl: null } as never;
+  const row = flattenResult(site);
+  assert.equal(row.emails, "info@acme.de");
+  assert.equal(row.other_emails, "office@agency.at");
+  assert.equal(row.primary_email, "info@acme.de");
+});
+
+test("exact-domain addresses outrank sister-brand domains", () => {
+  const merged = mergeEmails(
+    [
+      { email: "info@zotterusa.com", source: "https://zotter.at/kontakt", via: "mailto" },
+      { email: "online-shop@zotter.at", source: "https://zotter.at/kontakt", via: "mailto" },
+    ],
+    "zotter.at",
+  );
+  assert.equal(merged[0].value, "online-shop@zotter.at");
+  assert.equal(merged[1].ownDomain, true);
 });

@@ -20,6 +20,7 @@ type Input = {
   validateEmails?: boolean;
   aiSummary?: boolean;
   onlyWithContacts?: boolean;
+  includeDetails?: boolean;
   maxConcurrency?: number;
 };
 
@@ -87,7 +88,7 @@ async function handle(url: string) {
   else state.failed++;
 
   if (!(input.onlyWithContacts && status !== "found")) {
-    await Actor.pushData({ ...flattenResult(row), status, status_note: note, details: { emails: row.emails, phones: row.phones, whatsapp: row.whatsapp, socials: row.socials, company: row.company, pagesCrawled: row.pagesCrawled, flags: row.flags } });
+    await Actor.pushData({ ...flattenResult(row), status, status_note: note, ...(input.includeDetails ? { details: { emails: row.emails, phones: row.phones, whatsapp: row.whatsapp, socials: row.socials, company: row.company, pagesCrawled: row.pagesCrawled, flags: row.flags } } : {}) });
   }
   state.done.push(url);
   const n = state.done.length;
