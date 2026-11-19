@@ -264,6 +264,9 @@ export function extractPage(html: string, pageUrl: string, opts: { countryHint?:
   // A page with almost no text but plenty of script is a client-rendered app shell.
   const visibleLen = facts.text.replace(/\s+/g, "").length;
   facts.jsHeavy = visibleLen < 400 && (scriptBytes > 2_000 || $("script[src]").length >= 3 || $("#root, #__next, #app, [ng-app], #___gatsby").length > 0);
+  // Everything has been extracted; keep only a short excerpt (summary input, soft-404 comparison) so
+  // eight crawled pages do not pin megabytes of text in memory.
+  facts.text = facts.text.slice(0, 20_000);
   return facts;
 }
 

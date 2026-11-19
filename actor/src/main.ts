@@ -54,7 +54,11 @@ const options = {
   validateEmails: input.validateEmails ?? true,
   aiSummary: aiEnabled,
 };
-const concurrency = Math.min(50, Math.max(1, input.maxConcurrency ?? 10));
+// Each site in flight holds a few parsed pages (tens of MB), so cap parallelism by the run's memory:
+// about 82 MB baseline plus ~40 MB per concurrent site.
+const memoryMb = Actor.getEnv().memoryMbytes ?? 512;
+const memoryCap = Math.max(1, Math.floor((memoryMb - 120) / 40));
+const concurrency = Math.min(memoryCap, 50, Math.max(1, input.maxConcurrency ?? 5));
 const state = (await Actor.useState<{ done: string[]; found: number; empty: number; failed: number }>("progress", { done: [], found: 0, empty: 0, failed: 0 }))!;
 const done = new Set(state.done);
 const queue = sites.filter((s) => !done.has(s));

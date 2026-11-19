@@ -103,7 +103,7 @@ export const DEFAULT_OPTIONS: ExtractOptions = {
   validateEmails: true,
   smartStop: true,
   timeoutMs: 12_000,
-  maxPageBytes: 1_500_000,
+  maxPageBytes: 1_000_000,
   respectRobots: true,
   aiSummary: false,
 };

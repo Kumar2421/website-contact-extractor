@@ -16,7 +16,7 @@ import { DEFAULT_OPTIONS, type ExtractOptions, type FailureReason, type SiteResu
 
 const GUESS_PATHS = ["/contact", "/contact-us", "/kontakt", "/impressum", "/about", "/about-us"];
 const SITEMAP_CONTACT = /contact|kontakt|contacto|contato|contatti|impressum|imprint|about|legal|uber-uns|ueber-uns/i;
-const PAGE_CONCURRENCY = 3;
+const PAGE_CONCURRENCY = 2;
 /** Hard ceiling per site so one slow site cannot stall a batch. */
 const SITE_DEADLINE_MS = 40_000;
 

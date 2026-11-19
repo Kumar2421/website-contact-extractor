@@ -29,7 +29,7 @@
     "validateEmails": { "title": "Check email domains (MX)", "type": "boolean", "description": "Flags addresses whose domain cannot receive mail.", "default": true },
     "aiSummary": { "title": "AI company summary", "type": "boolean", "description": "One-line description and industry per website with contacts. Charged as a separate event. Never invents contact data.", "default": false },
     "onlyWithContacts": { "title": "Only output websites with contacts", "type": "boolean", "description": "Skip rows for empty and unreachable sites (they are free either way).", "default": false, "sectionCaption": "Advanced" },
-    "maxConcurrency": { "title": "Max concurrency", "type": "integer", "description": "Websites processed in parallel.", "default": 10, "minimum": 1, "maximum": 50 }
+    "maxConcurrency": { "title": "Max concurrency", "type": "integer", "description": "Websites processed in parallel. Automatically capped by the run's memory (about 9 at 512 MB, 25 at 1 GB).", "default": 5, "minimum": 1, "maximum": 50 }
   },
   "required": []
 }
