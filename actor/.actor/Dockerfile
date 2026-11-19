@@ -10,4 +10,6 @@ COPY package*.json ./
 RUN npm ci --omit=dev --omit=optional --audit=false && rm -rf ~/.npm
 COPY --from=builder /usr/src/app/dist ./dist
 COPY . ./
-CMD ["node", "dist/main.js"]
+# Node cannot see the container's memory limit, so without a heap cap it lets garbage pile up until the
+# container is killed. Cap the old-space heap at 60% of the run's memory so it collects in time.
+CMD ["sh", "-c", "exec node --max-old-space-size=$(( ${ACTOR_MEMORY_MBYTES:-512} * 6 / 10 )) dist/main.js"]
